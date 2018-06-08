@@ -174,7 +174,7 @@ function nimValueFormat(value, fixedLength = 0, withSign = false) {
     let valueFirst = (Math.round(value / 1000) / 100).toFixed(2);
     if (withSign && value > 0) valueFirst = `+${valueFirst}`;
     valueFirst = new Array(Math.max(0, fixedLength - valueFirst.length)).join(' ') + valueFirst;
-    const valueSecond = ((value % 1000) / 1000).toFixed(3).substring(2);
+    const valueSecond = ((Math.abs(value) % 1000) / 1000).toFixed(3).substring(2);
     return chalk`{bold ${valueFirst}}${valueSecond} NIM`;
 }
 
@@ -440,6 +440,22 @@ async function action(args, repl) {
             console.error('Specify account address');
             return;
         }
+        case 'supply': {
+            if (!repl && !argv.silent) {
+                await displayInfoHeader(34);
+            }
+            const supply = await jsonRpcFetch('supply');
+            console.log(chalk`${nimValueFormat(supply.max, 15)} max supply`);
+            console.log(chalk`${nimValueFormat(supply.total, 15)} emitted`);
+            console.log(chalk`${nimValueFormat(supply.circulating, 15)} circulating`);
+            console.log(chalk`${nimValueFormat(supply.vested, 15)} vested`);
+            console.log(chalk`${nimValueFormat(supply.burned, 15)} burned`);
+            return;
+        }
+        case 'supply.json': {
+            console.log(JSON.stringify(await jsonRpcFetch('supply')));
+            return;
+        }
         // Blocks
         case 'block': {
             if (!repl && !argv.silent) {
@@ -557,7 +573,7 @@ async function action(args, repl) {
             if (!repl && !argv.silent) {
                 await displayInfoHeader(75);
             }
-            const transactions = (await jsonRpcFetch('getTransactionsByAddress', args[1], args[2])).sort((a, b) => a.timestamp > b.timestamp);
+            const transactions = (await jsonRpcFetch('getTransactionsByAddress', args[1], args[2])).sort((a, b) => b.timestamp - a.timestamp);
             const self = Nimiq.Address.fromString(args[1]);
             console.log(chalk`Transaction log for {bold ${self.toUserFriendlyAddress()}}:`);
             for (const tx of transactions) {

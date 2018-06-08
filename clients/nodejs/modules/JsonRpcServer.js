@@ -88,6 +88,7 @@ class JsonRpcServer {
         this._methods.set('createAccount', this.createAccount.bind(this));
         this._methods.set('getBalance', this.getBalance.bind(this));
         this._methods.set('getAccount', this.getAccount.bind(this));
+        this._methods.set('supply', this.supply.bind(this));
 
         // Blockchain
         this._methods.set('blockNumber', this.blockNumber.bind(this));
@@ -407,6 +408,35 @@ class JsonRpcServer {
         return this._accountToObj(account, address);
     }
 
+    async supply() {
+        const supply = {
+            burned: 0,
+            vested: 0,
+            circulating: 0,
+            total: 0,
+            max: Nimiq.Policy.TOTAL_SUPPLY
+        }
+        const accounts = await this._accounts.getAll();
+        for(const address of accounts.keys()) {
+            const account = accounts.get(address);
+            supply.total += account.balance;
+            if (account.type === 0) {
+                if (address.equals(Nimiq.Address.NULL)) {
+                    supply.burned += account.balance;
+                } else {
+                    supply.circulating += account.balance;
+                }
+            } else if (account.type === 1) {
+                const vested = account.getMinCap(this._blockchain.height);
+                supply.circulating += account.balance - vested;
+                supply.vested += vested;
+            } else if (account.type === 2) {
+                supply.circulating += account.balance;
+            }
+        }
+        return supply;
+    }
+
     /*
      * Blockchain
      */
@@ -503,6 +533,7 @@ class JsonRpcServer {
             headHash: connection && connection.peer ? connection.peer.headHash.toHex() : undefined,
             score: connection ? connection.score : undefined,
             latency: connection ? connection.statistics.latencyMedian : undefined,
+            netAddress: connection && connection.networkConnection ? connection.networkConnection.netAddress.toString() : undefined,
             rx: connection && connection.networkConnection ? connection.networkConnection.bytesReceived : undefined,
             tx: connection && connection.networkConnection ? connection.networkConnection.bytesSent : undefined
         };

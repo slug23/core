@@ -80,6 +80,19 @@ class Accounts extends Observable {
     }
 
     /**
+     * @returns {Promise.<Map.<Address, Account>>}
+     */
+    async getAll() {
+        const terminalNodes = await this._tree.getTerminalNodes('', Infinity);
+        /** @type {Map.<Address, Account>} */
+        const map = new Map();
+        for (let node of terminalNodes) {
+            map.set(Address.fromHex(node.prefix), node.account);
+        }
+        return map;
+    }
+
+    /**
      * @param {Block} block
      * @param {TransactionCache} transactionCache
      * @return {Promise}

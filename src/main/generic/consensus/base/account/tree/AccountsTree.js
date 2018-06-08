@@ -310,7 +310,7 @@ class AccountsTree extends Observable {
      * @returns {Promise.<AccountsTreeChunk>}
      */
     async getChunk(startPrefix, size) {
-        const chunk = await this._store.getTerminalNodes(startPrefix, size);
+        const chunk = await this.getTerminalNodes(startPrefix, size);
         const lastNode = chunk.pop();
         let /** @type {AccountsProof} */ proof;
         if (lastNode) {
@@ -320,6 +320,15 @@ class AccountsTree extends Observable {
             proof = await this.getAccountsProof([Address.fromHex('ffffffffffffffffffffffffffffffffffffffff')]);
         }
         return new AccountsTreeChunk(chunk, proof);
+    }
+
+    /**
+     * @param {string} startPrefix
+     * @param {number} size
+     * @returns {Promise.<Array.<AccountsTreeNode>>}
+     */
+    getTerminalNodes(startPrefix, size) {
+        return this._store.getTerminalNodes(startPrefix, size);
     }
 
     /**
