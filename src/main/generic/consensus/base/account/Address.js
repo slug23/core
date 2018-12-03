@@ -134,6 +134,7 @@ class Address extends Serializable {
         return parseInt(tmp);
     }
 
+
     /**
      * @param {boolean} [withSpaces]
      * @return {string}
@@ -146,8 +147,20 @@ class Address extends Serializable {
         if (withSpaces) res = res.replace(/.{4}/g, '$& ').trim();
         return res;
     }
+
+
+    /**
+     * @param {boolean} [withSpaces]
+     * @return {string}
+     */
+    toUserFriendlyAddress(withSpaces = true) {
+        const emojiBase256 = BufferUtils.toEmojiBase256(this.serialize());
+        let res = Address.EMOJI_BOOKEND + emojiBase256 + Address.EMOJI_BOOKEND;
+        return res;
+    }
 }
 Address.CCODE = 'NQ';
+Address.EMOJI_BOOKEND = '⬣';
 Address.SERIALIZED_SIZE = 20;
 Address.HEX_SIZE = 40;
 Address.NULL = new Address(new Uint8Array(Address.SERIALIZED_SIZE));
